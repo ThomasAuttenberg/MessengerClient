@@ -1,51 +1,38 @@
 package com.messenger.messengerclient;
 
+import com.messenger.messengerclient.Models.Communication.Configuration;
+import com.messenger.messengerclient.Models.Communication.Connection;
+import com.messenger.messengerclient.Models.Communication.NotificationConnection;
 import com.messenger.messengerclient.Models.Messenger;
-import javafx.event.EventHandler;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.input.MouseEvent;
+import com.messenger.messengerclient.Models.UI;
 import javafx.stage.Stage;
-import org.kordamp.bootstrapfx.BootstrapFX;
 
 import java.io.IOException;
 
 public class Application extends javafx.application.Application {
     private Stage stage;
+    private static Connection connection;
+    private static NotificationConnection notificationConnection;
+    private static final Messenger messenger = new Messenger();
+    private static String userToken;
+
     @Override
     public void start(Stage stage) throws IOException {
-        this.stage = stage;
-        FXMLLoader fxmlLoader = new FXMLLoader(Application.class.getResource("hello-view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 320, 240);
-        //scene.getStylesheets().add(BootstrapFX.bootstrapFXStylesheet());
-        Button btn = (Button) scene.lookup("#loginBtn");
-        btn.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                hide();
-                Messenger messenger = new Messenger();
-                try {
-                    messenger.show();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-        stage.setTitle("Hello!");
-        stage.setScene(scene);
-        stage.show();
-    }
 
-    public void hide(){
-        stage.hide();
-    }
+        Configuration.configure();
+        connection = new Connection(Configuration.getSocket(9000));
+        notificationConnection = new NotificationConnection(Configuration.getSocket(9001));
 
-    public static FXMLLoader getResource(String name){
-        return  new FXMLLoader(Application.class.getResource(name));
+        UI.showAuthorizationWindow();
+
     }
 
     public static void main(String[] args) {
         launch();
     }
+    public static Messenger getMessenger(){return messenger;}
+    public static Connection getConnection(){return connection;}
+    public static NotificationConnection getNotificationConnection(){return notificationConnection;}
+    public static void setUserToken(String token){userToken = token;}
+    public static String getUserToken(){return userToken;}
 }
