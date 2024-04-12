@@ -18,6 +18,8 @@ public class Connection{
     public Connection(Socket socket){
         this.socket = socket;
         try {
+            //inputStream = new BufferedInputStream(socket.getInputStream());
+            //outputStream = new BufferedOutputStream(socket.getOutputStream());
             inputStream = new BufferedInputStream(socket.getInputStream());
             outputStream = new BufferedOutputStream(socket.getOutputStream());
         } catch (IOException e) {
@@ -40,6 +42,17 @@ public class Connection{
         if(objectOutputStream == null) objectOutputStream = new ObjectOutputStream(outputStream);
         objectOutputStream.writeObject(object);
         objectOutputStream.flush();
+    }
+    public boolean hasServerReply(){
+
+        try {
+            if(inputStream.available() != 0)
+                System.out.println("state: "+inputStream.available());
+            return inputStream.available() > 0;
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

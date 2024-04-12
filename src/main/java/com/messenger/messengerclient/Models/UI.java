@@ -11,8 +11,9 @@ import java.io.IOException;
 public class UI {
     private static Stage stage;
     private static Controller controller;
+    private static Stage navigationMenu;
     public static void showMessenger(){
-        if(stage != null) stage.hide();
+        if(stage != null) stage.close();
 
         FXMLLoader loader = new FXMLLoader(Application.class.getResource("messenger2.fxml"));
         Scene scene = null;
@@ -22,17 +23,18 @@ public class UI {
             System.out.println("REALLY HERE");
             throw new RuntimeException(e);
         }
-        System.out.println("");
+        stage.setTitle("Messenger");
         //stage = new Stage();
         stage.setScene(scene);
         stage.setMinWidth(500);
         stage.setMinHeight(500);
+        stage.setOnCloseRequest(event -> Application.getMessenger().close());
         stage.show();
 
         controller = ((Controller) loader.getController());
     }
     public static void showAuthorizationWindow(){
-        if(stage != null) stage.hide();
+        if(stage != null) stage.close();
         FXMLLoader loader = new FXMLLoader(Application.class.getResource("hello-view.fxml"));
         Scene scene = null;
         try {
@@ -41,7 +43,7 @@ public class UI {
             throw new RuntimeException(e);
         }
         stage = new Stage();
-        stage.setTitle("Hello!");
+        stage.setTitle("Authorization");
         stage.setScene(scene);
         stage.show();
 
@@ -49,5 +51,24 @@ public class UI {
     }
     public static Controller getController(){
         return controller;
+    }
+
+    public static void showNavigationMenu() {
+        FXMLLoader loader = new FXMLLoader(Application.class.getResource("navigationView.fxml"));
+        Scene scene = null;
+        try {
+            scene = new Scene(loader.load());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        stage = new Stage();
+        stage.setTitle("Navigation");
+        stage.setScene(scene);
+        stage.show();
+        navigationMenu = stage;
+    }
+
+    public static void hideNavigationMenu() {
+        navigationMenu.hide();
     }
 }

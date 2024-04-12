@@ -3,6 +3,7 @@ package com.messenger.messengerclient.Models.Communication;
 import com.messenger.messengerclient.Application;
 import com.messenger.messengerclient.Models.Entities.Message;
 import com.messenger.messengerclient.Models.Entities.Subscription;
+import com.messenger.messengerclient.Models.MutableBoolean;
 import javafx.application.Platform;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -26,6 +27,7 @@ public class ConnectionActor {
         request.put("threadId",threadId);
         try {
             connection.sendRequest(request);
+            System.out.println("MEOW"+connection.hasServerReply());
             System.out.println(connection.getReply());
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -36,7 +38,7 @@ public class ConnectionActor {
     public interface NotificationCallBack{
         public void onNotificationCallBack(Long topicId, String firstMessage, boolean isNotification);
     }
-    public Thread initNotificationsConnection(String token, NotificationCallBack a){
+    public Thread initNotificationsConnection(String token, MutableBoolean closeFlag, NotificationCallBack a){
         JSONObject request = new JSONObject();
         request.put("token", token);
         NotificationConnection notificationConnection = Application.getNotificationConnection();
@@ -49,12 +51,13 @@ public class ConnectionActor {
             throw new RuntimeException(e);
         }
         return new Thread(() -> {
-            while (true) {
+            while (closeFlag.getValue()) {
                 try {
-                    JSONObject notification = (JSONObject) notificationConnection.getReply();
+                    JSONObject notification = (JSONObject) notificationConnection.getReply(closeFlag);
+                    if(notification == null) continue;
                     System.out.println("NEW NOTIFICATION"+notification);
                     Platform.runLater(() -> a.onNotificationCallBack((Long) notification.get("threadId"), (String)notification.get("firstMessage"), (boolean)notification.get("isNotification")));
-
+                    if(!closeFlag.getValue()) System.out.println("FLAG FALSE");
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -104,6 +107,28 @@ public class ConnectionActor {
             throw new RuntimeException(e);
         }
     }
+    public void subscribe(Long topicId){
+        JSONObject request = new JSONObject();
+        request.put("requestDescription","Subscribe");
+        request.put("threadId",topicId);
+        try {
+            connection.sendRequest(request);
+            connection.getReply();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void unsubscrube(Long topicId){
+        JSONObject request = new JSONObject();
+        request.put("requestDescription","Unsubscribe");
+        request.put("threadId",topicId);
+        try {
+            connection.sendRequest(request);
+            connection.getReply();
+        }catch (IOException e){
+            throw new RuntimeException(e);
+        }
+    }
     public Message getLastMessage (Long topicId){
         try {
             JSONObject request = new JSONObject();
@@ -132,9 +157,9 @@ public class ConnectionActor {
 
             JSONArray messagesJSONArray = (JSONArray) reply.get("messages");
             JSONObject parentMessageJSON = (JSONObject) reply.get("parentMessage");
-
+            if(parentMessageJSON == null) return null;
             LinkedList<Message> messages = new LinkedList<>();
-            if(parentMessageJSON.get("id") == null) return null;
+           // if(parentMessageJSON.get("id") == null) return null;
             Message parentMessage = getMessage(parentMessageJSON);
             messages.add(parentMessage);
 

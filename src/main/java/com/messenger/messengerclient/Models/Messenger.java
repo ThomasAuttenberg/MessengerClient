@@ -15,6 +15,18 @@ public class Messenger {
     LinkedList<Subscription> subscriptions;
     HashMap<Long,Long> lastReadTime;
     MessengerController messengerController;
+     Thread notificationThread;
+     MutableBoolean notificationThreadCloseFlag = new MutableBoolean(true);
+
+    public void initNotificationConnection(){
+        ConnectionActor connectionActor = new ConnectionActor(Application.getNotificationConnection());
+        notificationThread = connectionActor.initNotificationsConnection(Application.getUserToken(), notificationThreadCloseFlag, messengerController::updateMessagesByNotification);
+        notificationThread.start();
+    }
+    public void close(){
+        notificationThreadCloseFlag.setValue(false);
+        System.out.println("Flag:"+notificationThreadCloseFlag);
+    }
 
     public void setMessengerController(MessengerController controller){
         this.messengerController = controller;
@@ -43,9 +55,21 @@ public class Messenger {
                 return false;
         }
     }
-    public Message getLastMessage(Subscription subscription){
+    public Message getLastMessage(Long topicId){
         ConnectionActor connectionActor = new ConnectionActor(Application.getConnection());
-        return connectionActor.getLastMessage(subscription.getTopicId());
+        return connectionActor.getLastMessage(topicId);
+    }
+    public void unsubscribe(Long topicId){
+        ConnectionActor connectionActor = new ConnectionActor(Application.getConnection());
+        connectionActor.unsubscrube(topicId);
+        updateSubscriptions();
+        messengerController.updateTopics();
+    }
+    public void subscribe(Long topicId){
+        ConnectionActor connectionActor = new ConnectionActor(Application.getConnection());
+        connectionActor.subscribe(topicId);
+        updateSubscriptions();
+        messengerController.updateTopics();
     }
 
     public LinkedList<Subscription> getSubscriptions(){

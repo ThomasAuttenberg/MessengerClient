@@ -36,13 +36,20 @@
             </ScrollPane>
          </center>
          <top>
-                  <Button fx:id="goBackButton" layoutX="5.0" layoutY="2.0" mnemonicParsing="false" style="-fx-background-color: grey;" text="&lt;">
+               <HBox spacing="5">
+                  <Button fx:id="goBackButton" layoutX="5.0" layoutY="2.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="25.0" style="-fx-background-color: grey;" text="&lt;">
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>
                      <font>
                         <Font name="System Bold" size="13.0" />
                      </font></Button>
+               <Button fx:id="subscribeButton" mnemonicParsing="false" prefHeight="29.0" prefWidth="95.0" style="-fx-background-color: grey;" text="Подписаться">
+                  <opaqueInsets>
+                     <Insets top="5.0" />
+                  </opaqueInsets>
+               </Button>
+               </HBox>
          </top>
       </BorderPane>
    </center>
