@@ -28,6 +28,7 @@ public class Topic extends VBox {
     public Text getMessage() {
         return message;
     }
+    public void setMessage(String content){message = new Text(content);}
     public Text getTopic() {
         return topic;
     }

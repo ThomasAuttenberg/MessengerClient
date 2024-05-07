@@ -3,6 +3,7 @@ package com.messenger.messengerclient.Models.Communication;
 import com.messenger.messengerclient.Application;
 import com.messenger.messengerclient.Models.Entities.Message;
 import com.messenger.messengerclient.Models.Entities.Subscription;
+import com.messenger.messengerclient.Models.Messenger;
 import com.messenger.messengerclient.Models.MutableBoolean;
 import javafx.application.Platform;
 import org.json.simple.JSONArray;
@@ -38,7 +39,7 @@ public class ConnectionActor {
     public interface NotificationCallBack{
         public void onNotificationCallBack(Long topicId, String firstMessage, boolean isNotification);
     }
-    public Thread initNotificationsConnection(String token, MutableBoolean closeFlag, NotificationCallBack a){
+    public Thread initNotificationsConnection(String token, NotificationCallBack a){
         JSONObject request = new JSONObject();
         request.put("token", token);
         NotificationConnection notificationConnection = Application.getNotificationConnection();
@@ -51,15 +52,14 @@ public class ConnectionActor {
             throw new RuntimeException(e);
         }
         return new Thread(() -> {
-            while (closeFlag.getValue()) {
+            while (true) {
                 try {
-                    JSONObject notification = (JSONObject) notificationConnection.getReply(closeFlag);
+                    JSONObject notification = (JSONObject) notificationConnection.getReply();
                     if(notification == null) continue;
                     System.out.println("NEW NOTIFICATION"+notification);
                     Platform.runLater(() -> a.onNotificationCallBack((Long) notification.get("threadId"), (String)notification.get("firstMessage"), (boolean)notification.get("isNotification")));
-                    if(!closeFlag.getValue()) System.out.println("FLAG FALSE");
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                } catch (IOException ignored) {
+                    break;
                 }
             }
         });

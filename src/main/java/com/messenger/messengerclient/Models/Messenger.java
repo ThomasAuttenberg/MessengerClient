@@ -15,17 +15,18 @@ public class Messenger {
     LinkedList<Subscription> subscriptions;
     HashMap<Long,Long> lastReadTime;
     MessengerController messengerController;
-     Thread notificationThread;
-     MutableBoolean notificationThreadCloseFlag = new MutableBoolean(true);
+    Thread notificationThread;
+     //MutableBoolean notificationThreadCloseFlag = new MutableBoolean(true);
 
     public void initNotificationConnection(){
         ConnectionActor connectionActor = new ConnectionActor(Application.getNotificationConnection());
-        notificationThread = connectionActor.initNotificationsConnection(Application.getUserToken(), notificationThreadCloseFlag, messengerController::updateMessagesByNotification);
+        notificationThread = connectionActor.initNotificationsConnection(Application.getUserToken(), messengerController::updateMessagesByNotification);
         notificationThread.start();
     }
     public void close(){
-        notificationThreadCloseFlag.setValue(false);
-        System.out.println("Flag:"+notificationThreadCloseFlag);
+        //notificationThreadCloseFlag.setValue(false);
+        Application.getNotificationConnection().close();
+        //System.out.println("Flag:"+notificationThreadCloseFlag);
     }
 
     public void setMessengerController(MessengerController controller){

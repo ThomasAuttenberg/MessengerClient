@@ -101,20 +101,27 @@ public class MessengerController implements Controller {
     }
 
     public synchronized void updateMessagesByNotification(Long topicId, String firstMessage, boolean isNotification) {
+        ConnectionActor connectionActor = new ConnectionActor(Application.getConnection());
         if(currentTopic == topicId){
-            ConnectionActor connectionActor = new ConnectionActor(Application.getConnection());
+            Message lastMessage = connectionActor.getLastMessage(topicId);
+            boolean needToScroll = messagesScrollPane.getVvalue() > 0.99;
             addMessage(connectionActor.getLastMessage(topicId));
             connectionActor.setTopicRead(topicId);
-            if(messagesScrollPane.vvalueProperty().get() > 0.999)
-                messagesScrollPane.setVvalue(1.0);
+            topics.get(currentTopic).setMessage(lastMessage.getContent());
+            if(needToScroll)
+                Platform.runLater(() -> messagesScrollPane.setVvalue(1.0));
             return;
         }
         if(topics.containsKey(topicId)){
             topics.get(topicId).setUnread();
+            topics.get(topicId).setMessage(connectionActor.getLastMessage(topicId).getContent());
         }else {
             if (isNotification) {
                 Subscription subscription = new Subscription(topicId, 0L, firstMessage, true);
                 addSubscription(subscription);
+                if(topics.containsKey(topicId)){
+                    topics.get(topicId).setMessage(connectionActor.getLastMessage(topicId).getContent());
+                }
             }
         }
     }
