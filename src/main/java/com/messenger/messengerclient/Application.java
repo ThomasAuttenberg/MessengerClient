@@ -1,6 +1,5 @@
 package com.messenger.messengerclient;
 
-import com.messenger.messengerclient.Models.Communication.Configuration;
 import com.messenger.messengerclient.Models.Communication.Connection;
 import com.messenger.messengerclient.Models.Communication.NotificationConnection;
 import com.messenger.messengerclient.Models.Messenger;
@@ -16,12 +15,16 @@ public class Application extends javafx.application.Application {
     private static final Messenger messenger = new Messenger();
     private static String userToken;
 
+
+
     @Override
     public void start(Stage stage) throws IOException {
 
-        Configuration.configure();
-        connection = new Connection(Configuration.getSocket(9000));
-        notificationConnection = new NotificationConnection(Configuration.getSocket(9001));
+        Thread n;
+
+        //Configuration.configure();
+        //connection = new Connection(Configuration.getSocket(9000));
+        //notificationConnection = new NotificationConnection(Configuration.getSocket(9001));
 
         UI.showAuthorizationWindow();
 

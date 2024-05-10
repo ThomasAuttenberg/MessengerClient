@@ -4,6 +4,8 @@ module com.messenger.messengerclient {
 
     requires org.kordamp.bootstrapfx.core;
     requires json.simple;
+    requires retrofit2;
+    requires okhttp3;
 
     opens com.messenger.messengerclient to javafx.fxml;
     exports com.messenger.messengerclient;

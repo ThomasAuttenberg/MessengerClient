@@ -28,7 +28,7 @@ public class UI {
         stage.setScene(scene);
         stage.setMinWidth(500);
         stage.setMinHeight(500);
-        stage.setOnCloseRequest(event -> Application.getMessenger().close());
+        //stage.setOnCloseRequest(event -> Application.getMessenger().close());
         stage.show();
 
         controller = ((Controller) loader.getController());

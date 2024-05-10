@@ -1,8 +1,7 @@
 package com.messenger.messengerclient.Models;
 
-import com.messenger.messengerclient.Application;
 import com.messenger.messengerclient.Controllers.MessengerController;
-import com.messenger.messengerclient.Models.Communication.ConnectionActor;
+import com.messenger.messengerclient.Models.Communication.RestAPI.ConnectionManager;
 import com.messenger.messengerclient.Models.Entities.Message;
 import com.messenger.messengerclient.Models.Entities.Subscription;
 import com.messenger.messengerclient.Models.Entities.User;
@@ -15,10 +14,11 @@ public class Messenger {
     LinkedList<Subscription> subscriptions;
     HashMap<Long,Long> lastReadTime;
     MessengerController messengerController;
-     Thread notificationThread;
-     MutableBoolean notificationThreadCloseFlag = new MutableBoolean(true);
+    //ConnectionActor connectionActor = new ConnectionActor(Application.getConnection());
+     //Thread notificationThread;
+     //MutableBoolean notificationThreadCloseFlag = new MutableBoolean(true);
 
-    public void initNotificationConnection(){
+    /*public void initNotificationConnection(){
         ConnectionActor connectionActor = new ConnectionActor(Application.getNotificationConnection());
         notificationThread = connectionActor.initNotificationsConnection(Application.getUserToken(), notificationThreadCloseFlag, messengerController::updateMessagesByNotification);
         notificationThread.start();
@@ -26,23 +26,34 @@ public class Messenger {
     public void close(){
         notificationThreadCloseFlag.setValue(false);
         System.out.println("Flag:"+notificationThreadCloseFlag);
+    }*/
+    public void meow(long thread){
+        System.out.println("proxy on thread "+thread);
     }
-
+    public void initNotificationConnection(){
+        ConnectionManager.initNotificationConnection(messengerController::updateMessagesByNotification);
+    }
     public void setMessengerController(MessengerController controller){
         this.messengerController = controller;
     }
 
     public void updateSubscriptions(){
-        ConnectionActor connectionActor = new ConnectionActor(Application.getConnection());
-        subscriptions = connectionActor.getSubscriptions();
+        subscriptions = ConnectionManager.getSubscriptions();
+    }
+
+    public void sendMessage(Long topicId, String content){
+        ConnectionManager.sendMessage(content,topicId);
+    }
+
+    public void setTopicRead(Long topicId){
+        ConnectionManager.setTopicRead(topicId);
     }
 
     public LinkedList<Message> getMessages(long topicId){
-        ConnectionActor connectionActor = new ConnectionActor(Application.getConnection());
-        return connectionActor.getMessagesByTopic(topicId);
+        return ConnectionManager.getMessagesByTopic(topicId);
     }
 
-    public boolean hasNewMessages(Subscription subscription){
+    /*public boolean hasNewMessages(Subscription subscription){
         subscription.getTopicId();
         ConnectionActor connectionActor = new ConnectionActor(Application.getConnection());
         Message lastMessage;
@@ -55,19 +66,20 @@ public class Messenger {
                 return false;
         }
     }
+    */
+    public Message getFirstMessage(Long topicId){
+        return ConnectionManager.getFirstMessage(topicId);
+    }
     public Message getLastMessage(Long topicId){
-        ConnectionActor connectionActor = new ConnectionActor(Application.getConnection());
-        return connectionActor.getLastMessage(topicId);
+        return ConnectionManager.getLastMessage(topicId);
     }
     public void unsubscribe(Long topicId){
-        ConnectionActor connectionActor = new ConnectionActor(Application.getConnection());
-        connectionActor.unsubscrube(topicId);
+        ConnectionManager.unsubscrube(topicId);
         updateSubscriptions();
         messengerController.updateTopics();
     }
     public void subscribe(Long topicId){
-        ConnectionActor connectionActor = new ConnectionActor(Application.getConnection());
-        connectionActor.subscribe(topicId);
+        ConnectionManager.subscribe(topicId);
         updateSubscriptions();
         messengerController.updateTopics();
     }

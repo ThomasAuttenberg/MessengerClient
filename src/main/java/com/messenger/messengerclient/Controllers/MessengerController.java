@@ -1,7 +1,7 @@
 package com.messenger.messengerclient.Controllers;
 
 import com.messenger.messengerclient.Application;
-import com.messenger.messengerclient.Models.Communication.ConnectionActor;
+import com.messenger.messengerclient.Models.Communication.RestAPI.ConnectionManager;
 import com.messenger.messengerclient.Models.Entities.Message;
 import com.messenger.messengerclient.Models.Entities.Subscription;
 import com.messenger.messengerclient.Models.UI;
@@ -23,6 +23,9 @@ import javafx.scene.layout.VBox;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class MessengerController implements Controller {
     @FXML
@@ -64,8 +67,7 @@ public class MessengerController implements Controller {
                 if (event.getButton() != MouseButton.PRIMARY) return;
                 if (topic.isUnread()) {
                     topic.setRead();
-                    ConnectionActor connectionActor = new ConnectionActor(Application.getConnection());
-                    connectionActor.setTopicRead(topic.getTopicId());
+                    Application.getMessenger().setTopicRead(topic.getTopicId());
                 }
                 goToTopic(subscription.getTopicId());
                 Platform.runLater(() -> messagesScrollPane.setVvalue(1.0));
@@ -97,25 +99,32 @@ public class MessengerController implements Controller {
         });
         boolean needsToScroll = messagesScrollPane.getVvalue() > 0.95;
         messagesVBox.getChildren().add(messageView);
-        if(needsToScroll) Platform.runLater(() -> messagesScrollPane.setVvalue(1.0));
+        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+
+        executorService.schedule(() -> {
+            Platform.runLater(() -> {
+                if(needsToScroll) messagesScrollPane.setVvalue(1.0);
+            });
+        }, 100, TimeUnit.MILLISECONDS);
+
     }
 
-    public synchronized void updateMessagesByNotification(Long topicId, String firstMessage, boolean isNotification) {
+    public void updateMessagesByNotification(Long topicId) {
+
+        if(topics.containsKey(topicId)) {
+            topics.get(topicId).setUnread();
+            topics.get(topicId).setMessage(ConnectionManager.getLastMessage(topicId).getContent());
+        }
         if(currentTopic == topicId){
-            ConnectionActor connectionActor = new ConnectionActor(Application.getConnection());
-            addMessage(connectionActor.getLastMessage(topicId));
-            connectionActor.setTopicRead(topicId);
+            Topic topic = topics.get(currentTopic);
+            if(topic != null) topic.setPicked();
+            addMessage(Application.getMessenger().getLastMessage(topicId));
+            Application.getMessenger().setTopicRead(topicId);
             if(messagesScrollPane.vvalueProperty().get() > 0.999)
                 messagesScrollPane.setVvalue(1.0);
-            return;
-        }
-        if(topics.containsKey(topicId)){
-            topics.get(topicId).setUnread();
         }else {
-            if (isNotification) {
-                Subscription subscription = new Subscription(topicId, 0L, firstMessage, true);
-                addSubscription(subscription);
-            }
+            Subscription subscription = new Subscription(topicId, 0L, ConnectionManager.getFirstMessage(topicId).getContent(), true);
+            addSubscription(subscription);
         }
     }
 
@@ -136,17 +145,14 @@ public class MessengerController implements Controller {
         textArea.setWrapText(true);
         textArea.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
           if(event.getCode() == KeyCode.ENTER) {
-              if (event.getCode() == KeyCode.ENTER && event.isShiftDown()) {
+              if (event.isShiftDown()) {
                   textArea.appendText("\n");
                   event.consume();
               }else{
-                  ConnectionActor connectionActor = new ConnectionActor(Application.getConnection());
-                  connectionActor.sendMessage(textArea.getText(),currentTopic);
-                 // addMessage(connectionActor.getLastMessage(currentTopic));
+                  Application.getMessenger().sendMessage(currentTopic,textArea.getText());
+                  //updateMessagesByNotification(currentTopic);
                   textArea.clear();
                   event.consume();
-                  //Platform.runLater(() -> {messagesScrollPane.requestLayout(); messagesScrollPane.setVvalue(1.0);});
-
               }
           }
         });
@@ -199,7 +205,6 @@ public class MessengerController implements Controller {
                 }
             }
             if(!isTopicInList) pickTopic(null);
-            //Platform.runLater(() -> messagesScrollPane.setVvalue(1.0));
         }
     }
 

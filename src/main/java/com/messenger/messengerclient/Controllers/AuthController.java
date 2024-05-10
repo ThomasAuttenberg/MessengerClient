@@ -1,7 +1,7 @@
 package com.messenger.messengerclient.Controllers;
 
 import com.messenger.messengerclient.Application;
-import com.messenger.messengerclient.Models.Communication.ConnectionActor;
+import com.messenger.messengerclient.Models.Communication.RestAPI.ConnectionManager;
 import com.messenger.messengerclient.Models.Entities.User;
 import com.messenger.messengerclient.Models.UI;
 import javafx.event.EventHandler;
@@ -26,8 +26,7 @@ public class AuthController implements Controller {
     };
 
     public boolean tryAuthorize(){
-        ConnectionActor actor = new ConnectionActor(Application.getConnection());
-        String token = actor.tryAuthorize(loginField.getText(),passwordField.getText());
+        String token = ConnectionManager.tryAuthorize(loginField.getText(),passwordField.getText());
         Application.setUserToken(token);
         if(Application.getUserToken() != null) {
             User user = new User();
