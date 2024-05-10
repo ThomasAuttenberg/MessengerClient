@@ -1,4 +1,4 @@
-package com.messenger.messengerclient.Models.Communication.RestAPI;
+package com.messenger.messengerclient.Models.Communication;
 
 import okhttp3.Cookie;
 import okhttp3.CookieJar;

@@ -1,7 +1,5 @@
 package com.messenger.messengerclient;
 
-import com.messenger.messengerclient.Models.Communication.Connection;
-import com.messenger.messengerclient.Models.Communication.NotificationConnection;
 import com.messenger.messengerclient.Models.Messenger;
 import com.messenger.messengerclient.Models.UI;
 import javafx.stage.Stage;
@@ -10,8 +8,6 @@ import java.io.IOException;
 
 public class Application extends javafx.application.Application {
     private Stage stage;
-    private static Connection connection;
-    private static NotificationConnection notificationConnection;
     private static final Messenger messenger = new Messenger();
     private static String userToken;
 
@@ -34,8 +30,6 @@ public class Application extends javafx.application.Application {
         launch();
     }
     public static Messenger getMessenger(){return messenger;}
-    public static Connection getConnection(){return connection;}
-    public static NotificationConnection getNotificationConnection(){return notificationConnection;}
     public static void setUserToken(String token){userToken = token;}
     public static String getUserToken(){return userToken;}
 }

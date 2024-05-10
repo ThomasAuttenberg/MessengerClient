@@ -1,7 +1,7 @@
 package com.messenger.messengerclient.Controllers;
 
 import com.messenger.messengerclient.Application;
-import com.messenger.messengerclient.Models.Communication.RestAPI.ConnectionManager;
+import com.messenger.messengerclient.Models.Communication.ConnectionManager;
 import com.messenger.messengerclient.Models.Entities.User;
 import com.messenger.messengerclient.Models.UI;
 import javafx.event.EventHandler;

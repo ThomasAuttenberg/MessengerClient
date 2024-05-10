@@ -1,4 +1,4 @@
-package com.messenger.messengerclient.Models.Communication.RestAPI;
+package com.messenger.messengerclient.Models.Communication;
 
 import com.messenger.messengerclient.Application;
 import com.messenger.messengerclient.Models.Entities.Message;
@@ -20,6 +20,7 @@ public class ConnectionManager {
 
     static private final OkHttpClient client;
     static private final RestAPIFace restAPIFace;
+    static private WebSocket notificationSocket;
     static{
         CookieManager cookieManager = new CookieManager();
         cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
@@ -75,7 +76,24 @@ public class ConnectionManager {
             }
         };
 
-        client.newWebSocket(request, listener);
+        notificationSocket = client.newWebSocket(request, listener);
+    }
+
+    static private Long localSubscription = -1L;
+    static public void setLocalSubscription(Long threadId){
+
+        if(!localSubscription.equals(threadId)) {
+            notificationSocket.send("view:" + threadId);
+            localSubscription = threadId;
+        }
+    }
+    static public void removeLocalSubscription(){
+        localSubscription = -1L;
+        notificationSocket.send("unview");
+    }
+    static public void closeNotificationConnection(){
+        notificationSocket.close(1000,null);
+        notificationSocket.cancel();
     }
 
     static public void sendMessage(String content,Long threadId){

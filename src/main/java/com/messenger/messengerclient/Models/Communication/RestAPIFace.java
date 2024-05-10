@@ -1,4 +1,4 @@
-package com.messenger.messengerclient.Models.Communication.RestAPI;
+package com.messenger.messengerclient.Models.Communication;
 
 import org.json.simple.JSONObject;
 import retrofit2.Call;

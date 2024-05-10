@@ -1,16 +1,13 @@
 package com.messenger.messengerclient.Controllers;
 
 import com.messenger.messengerclient.Application;
-import com.messenger.messengerclient.Models.Communication.RestAPI.ConnectionManager;
+import com.messenger.messengerclient.Models.Communication.ConnectionManager;
 import com.messenger.messengerclient.Models.Entities.Message;
 import com.messenger.messengerclient.Models.Entities.Subscription;
 import com.messenger.messengerclient.Models.UI;
 import com.messenger.messengerclient.Views.MessageView;
 import com.messenger.messengerclient.Views.Topic;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -18,7 +15,6 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 
 import java.util.HashMap;
@@ -41,6 +37,7 @@ public class MessengerController implements Controller {
     public Button subscribeButton;
     private long currentTopic;
     private long previousTopic;
+    private long newProbablyTopic = -1;
     private Topic pickedTopic = null;
     private final HashMap<Long, Topic> topics = new HashMap<>();
     private Thread notificationThread;
@@ -64,7 +61,6 @@ public class MessengerController implements Controller {
         if(subscription.isNotification()) topic.setNotification(true);
         topic.setOnMouseClicked(event -> {
             if(event.getButton() == MouseButton.PRIMARY) {
-                if (event.getButton() != MouseButton.PRIMARY) return;
                 if (topic.isUnread()) {
                     topic.setRead();
                     Application.getMessenger().setTopicRead(topic.getTopicId());
@@ -90,12 +86,9 @@ public class MessengerController implements Controller {
     public void addMessage(Message message){
         MessageView messageView = new MessageView(message);
         messageView.messageText.setWrappingWidth(messagesScrollPane.getWidth()-50);
-        messageView.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                if(event.getButton() != MouseButton.PRIMARY) return;
-                goToTopic(message.getMessageId());
-            }
+        messageView.setOnMouseClicked(event -> {
+            if(event.getButton() != MouseButton.PRIMARY) return;
+            goToTopic(message.getMessageId());
         });
         boolean needsToScroll = messagesScrollPane.getVvalue() > 0.95;
         messagesVBox.getChildren().add(messageView);
@@ -108,10 +101,13 @@ public class MessengerController implements Controller {
         }, 100, TimeUnit.MILLISECONDS);
 
     }
-
+    public Long getCurrentThread(){return currentTopic;}
     public void updateMessagesByNotification(Long topicId) {
-
+        System.out.println("NOTIFICATION!!!");
+        boolean contains = false;
         if(topics.containsKey(topicId)) {
+            contains = true;
+            System.out.println("contains");
             topics.get(topicId).setUnread();
             topics.get(topicId).setMessage(ConnectionManager.getLastMessage(topicId).getContent());
         }
@@ -122,7 +118,7 @@ public class MessengerController implements Controller {
             Application.getMessenger().setTopicRead(topicId);
             if(messagesScrollPane.vvalueProperty().get() > 0.999)
                 messagesScrollPane.setVvalue(1.0);
-        }else {
+        }else if(!contains) {
             Subscription subscription = new Subscription(topicId, 0L, ConnectionManager.getFirstMessage(topicId).getContent(), true);
             addSubscription(subscription);
         }
@@ -149,7 +145,10 @@ public class MessengerController implements Controller {
                   textArea.appendText("\n");
                   event.consume();
               }else{
-                  Application.getMessenger().sendMessage(currentTopic,textArea.getText());
+                  if(currentTopic == -1 && newProbablyTopic != -1)
+                      Application.getMessenger().sendMessage(newProbablyTopic,textArea.getText());
+                  else if (currentTopic != -1)
+                      Application.getMessenger().sendMessage(currentTopic,textArea.getText());
                   //updateMessagesByNotification(currentTopic);
                   textArea.clear();
                   event.consume();
@@ -159,12 +158,7 @@ public class MessengerController implements Controller {
         addTopicButton.setOnMouseClicked(event -> UI.showNavigationMenu());
         goBackButton.setOnMouseClicked(event -> {goToTopic(previousTopic);});
 
-        messagesScrollPane.vvalueProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                System.out.println(newValue);
-            }
-        });
+        messagesScrollPane.vvalueProperty().addListener((observable, oldValue, newValue) -> System.out.println(newValue));
 
         Application.getMessenger().initNotificationConnection();
 
@@ -183,12 +177,14 @@ public class MessengerController implements Controller {
             pickTopic(null);
         }else {
             messagesVBox.getChildren().clear();
+            Application.getMessenger().watchNow(topicId);
             LinkedList<Message> messages = Application.getMessenger().getMessages(topicId);
             if(messages == null){
+                newProbablyTopic = topicId;
                 goToTopic(-1);
                 return;
             }
-            if(!subscribeButton.isVisible()) subscribeButton.setVisible(true);
+            //if(!subscribeButton.isVisible())
             previousTopic = messages.getFirst().getParentMessageId();
             currentTopic = messages.getFirst().getMessageId();
             for (Message message : messages) {
@@ -204,7 +200,11 @@ public class MessengerController implements Controller {
                     break;
                 }
             }
-            if(!isTopicInList) pickTopic(null);
+            if(!isTopicInList){
+                subscribeButton.setVisible(true);
+                pickTopic(null);
+                Application.getMessenger().watchNow(topicId);
+            }
         }
     }
 
