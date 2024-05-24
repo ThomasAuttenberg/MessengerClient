@@ -2,12 +2,14 @@ package com.messenger.messengerclient;
 
 import com.messenger.messengerclient.Models.Communication.Configuration;
 import com.messenger.messengerclient.Models.Communication.Connection;
+import com.messenger.messengerclient.Models.Communication.ConnectionActor;
 import com.messenger.messengerclient.Models.Communication.NotificationConnection;
 import com.messenger.messengerclient.Models.Messenger;
 import com.messenger.messengerclient.Models.UI;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.net.InetAddress;
 
 public class Application extends javafx.application.Application {
     private Stage stage;
@@ -20,8 +22,8 @@ public class Application extends javafx.application.Application {
     public void start(Stage stage) throws IOException {
 
         Configuration.configure();
-        connection = new Connection(Configuration.getSocket(9000));
-        notificationConnection = new NotificationConnection(Configuration.getSocket(9001));
+        connection = new Connection(InetAddress.getByName("localhost"),9000);
+        ConnectionActor.setConnection(connection);
 
         UI.showAuthorizationWindow();
 

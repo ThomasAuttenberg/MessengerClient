@@ -3,8 +3,6 @@ package com.messenger.messengerclient.Models.Communication;
 import com.messenger.messengerclient.Application;
 import com.messenger.messengerclient.Models.Entities.Message;
 import com.messenger.messengerclient.Models.Entities.Subscription;
-import com.messenger.messengerclient.Models.MutableBoolean;
-import javafx.application.Platform;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -13,21 +11,20 @@ import java.util.LinkedList;
 
 public class ConnectionActor {
 
-    private Connection connection;
+    private static Connection connection;
 
-    public ConnectionActor(Connection connection){
-        this.connection = connection;
-    }
+    public static void setConnection(Connection connection_){connection = connection_;}
 
 
-    public void sendMessage(String content,Long threadId){
+    public static void sendMessage(String content,Long threadId){
         JSONObject request = new JSONObject();
+        request.put("token", Application.getUserToken());
         request.put("requestDescription","SendMessage");
         request.put("content",content);
         request.put("threadId",threadId);
         try {
             connection.sendRequest(request);
-            System.out.println("MEOW"+connection.hasServerReply());
+            //System.out.println("MEOW"+connection.hasServerReply());
             System.out.println(connection.getReply());
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -35,37 +32,7 @@ public class ConnectionActor {
     }
 
 
-    public interface NotificationCallBack{
-        public void onNotificationCallBack(Long topicId, String firstMessage, boolean isNotification);
-    }
-    public Thread initNotificationsConnection(String token, MutableBoolean closeFlag, NotificationCallBack a){
-        JSONObject request = new JSONObject();
-        request.put("token", token);
-        NotificationConnection notificationConnection = Application.getNotificationConnection();
-        try {
-            System.out.println("STAGE 1");
-            notificationConnection.sendRequest(request);
-            JSONObject reply = (JSONObject) notificationConnection.getReply();
-            System.out.println("Notification init:"+reply);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return new Thread(() -> {
-            while (closeFlag.getValue()) {
-                try {
-                    JSONObject notification = (JSONObject) notificationConnection.getReply(closeFlag);
-                    if(notification == null) continue;
-                    System.out.println("NEW NOTIFICATION"+notification);
-                    Platform.runLater(() -> a.onNotificationCallBack((Long) notification.get("threadId"), (String)notification.get("firstMessage"), (boolean)notification.get("isNotification")));
-                    if(!closeFlag.getValue()) System.out.println("FLAG FALSE");
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-    }
-
-    public String tryAuthorize(String username, String password){
+    public static String tryAuthorize(String username, String password){
         JSONObject request = new JSONObject();
         request.put("requestDescription","Authorization");
         request.put("authType","password");
@@ -83,10 +50,11 @@ public class ConnectionActor {
             return (String)reply.get("token");
         return null;
     }
-    public LinkedList<Subscription> getSubscriptions(){
+    public static LinkedList<Subscription> getSubscriptions(){
         try {
 
             JSONObject request = new JSONObject();
+            request.put("token", Application.getUserToken());
             request.put("requestDescription","GetSubscriptions");
             connection.sendRequest(request);
             JSONObject reply = (JSONObject) connection.getReply();
@@ -107,8 +75,9 @@ public class ConnectionActor {
             throw new RuntimeException(e);
         }
     }
-    public void subscribe(Long topicId){
+    public static void subscribe(Long topicId){
         JSONObject request = new JSONObject();
+        request.put("token", Application.getUserToken());
         request.put("requestDescription","Subscribe");
         request.put("threadId",topicId);
         try {
@@ -118,8 +87,9 @@ public class ConnectionActor {
             throw new RuntimeException(e);
         }
     }
-    public void unsubscrube(Long topicId){
+    public static void unsubscrube(Long topicId){
         JSONObject request = new JSONObject();
+        request.put("token", Application.getUserToken());
         request.put("requestDescription","Unsubscribe");
         request.put("threadId",topicId);
         try {
@@ -129,10 +99,30 @@ public class ConnectionActor {
             throw new RuntimeException(e);
         }
     }
-    public Message getLastMessage (Long topicId){
+    public static Message getLastMessage (Long topicId){
         try {
             JSONObject request = new JSONObject();
             request.put("requestDescription", "GetLastMessage");
+            request.put("threadId", topicId);
+            connection.sendRequest(request);
+            JSONObject reply = (JSONObject) connection.getReply();
+            if(((String)reply.get("status")).equals("OK")) {
+                System.out.println(reply.toJSONString());
+                Message message = getMessage((JSONObject) reply);
+                //message.setParentMessageId(topicId);
+                return message;
+            }else {
+                return null;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Message getFirstMessage (Long topicId){
+        try {
+            JSONObject request = new JSONObject();
+            request.put("requestDescription", "GetFirstMessage");
             request.put("threadId", topicId);
             connection.sendRequest(request);
             JSONObject reply = (JSONObject) connection.getReply();
@@ -147,7 +137,8 @@ public class ConnectionActor {
             throw new RuntimeException(e);
         }
     }
-    public LinkedList<Message> getMessagesByTopic(Long id){
+
+    public static LinkedList<Message> getMessagesByTopic(Long id){
         try {
             JSONObject request = new JSONObject();
             request.put("requestDescription","GetThread");
@@ -175,9 +166,10 @@ public class ConnectionActor {
         }
     }
 
-    public void setTopicRead(Long topicId) {
+    public static void setTopicRead(Long topicId) {
         try {
             JSONObject request = new JSONObject();
+            request.put("token", Application.getUserToken());
             request.put("requestDescription", "Read");
             request.put("threadId", topicId);
             connection.sendRequest(request);
@@ -196,7 +188,7 @@ public class ConnectionActor {
         message.setDatetime((Long)messageJSON.get("dateTime"));
         message.setParentMessageId((Long)messageJSON.get("parentMessage"));
         message.setContent((String)messageJSON.get("content"));
-        message.setQuotes((int)messageJSON.get("quotes"));
+        message.setQuotes((Long)messageJSON.get("quotes"));
         message.setAuthorUsername((String)messageJSON.get("author"));
         return message;
     }

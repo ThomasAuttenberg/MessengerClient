@@ -9,7 +9,7 @@ public class Message {
     private long author_id;
     private String authorUsername;
     private boolean unread = false;
-    private int quotes;
+    private long quotes;
 
         public long getMessageId() {
             return message_id;
@@ -26,7 +26,7 @@ public class Message {
             return content;
         }
 
-        public int getQuotes() {
+        public long getQuotes() {
             return quotes;
         }
 
@@ -49,7 +49,7 @@ public class Message {
         public void setDatetime(long datetime) {
             this.datetime = datetime;
         }
-        public void setQuotes(int quotes){
+        public void setQuotes(long quotes){
             this.quotes = quotes;
         }
         public void setUnread(){

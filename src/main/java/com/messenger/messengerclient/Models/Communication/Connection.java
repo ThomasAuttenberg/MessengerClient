@@ -1,58 +1,38 @@
 package com.messenger.messengerclient.Models.Communication;
 
-import java.io.*;
-import java.net.Socket;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
+import java.io.IOException;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
 
 public class Connection{
 
 
     private Boolean isRunning = true;
-    private final Socket socket;
-    private BufferedReader bufferedReader;
-    private BufferedWriter bufferedWriter;
-    private ObjectInputStream objectInputStream = null;
-    private ObjectOutputStream objectOutputStream = null;
-    protected BufferedInputStream inputStream;
-    protected BufferedOutputStream outputStream;
-
-    public Connection(Socket socket){
-        this.socket = socket;
+    private UDPSafeSocket udpSafeSocket;
+    private JSONParser jsonParser = new JSONParser();
+    public Connection(InetAddress inetAddress, int port){
         try {
-            //inputStream = new BufferedInputStream(socket.getInputStream());
-            //outputStream = new BufferedOutputStream(socket.getOutputStream());
-            inputStream = new BufferedInputStream(socket.getInputStream());
-            outputStream = new BufferedOutputStream(socket.getOutputStream());
-        } catch (IOException e) {
+            udpSafeSocket = new UDPSafeSocket(new DatagramSocket(),inetAddress,port);
+        } catch (SocketException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public Object getReply() throws IOException{
-        if(objectInputStream == null) objectInputStream = new ObjectInputStream(inputStream);
-        Object request = null;
+    public JSONObject getReply() throws IOException{
         try {
-            request = objectInputStream.readObject();
-        } catch (ClassNotFoundException ignored) {;
-            System.out.println(ignored.getMessage());
-        }
-        return request;
-    }
-
-    public void sendRequest(Object object) throws IOException {
-        if(objectOutputStream == null) objectOutputStream = new ObjectOutputStream(outputStream);
-        objectOutputStream.writeObject(object);
-        objectOutputStream.flush();
-    }
-    public boolean hasServerReply(){
-
-        try {
-            if(inputStream.available() != 0)
-                System.out.println("state: "+inputStream.available());
-            return inputStream.available() > 0;
-
-        } catch (IOException e) {
+            return  (JSONObject) jsonParser.parse(new String(udpSafeSocket.get()).trim());
+        } catch (ParseException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void sendRequest(JSONObject jsonObject) throws IOException {
+        udpSafeSocket.send(jsonObject.toJSONString().getBytes());
     }
 
 }

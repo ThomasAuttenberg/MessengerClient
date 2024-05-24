@@ -31,6 +31,7 @@ public class Topic extends VBox {
     public Text getTopic() {
         return topic;
     }
+    public void setMessage(String message){this.message.setText(message);}
     public boolean isUnread() {return unread;}
     public void setRead() {
         unread = false;

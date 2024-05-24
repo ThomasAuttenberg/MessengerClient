@@ -16,7 +16,7 @@ public class MessageLoader {
             JSONObject request = new JSONObject();
             request.put("requestDescription","GetThread");
             request.put("threadId",id);
-            connection.sendRequest(id);
+            //connection.sendRequest(id);
             JSONObject reply = (JSONObject) connection.getReply();
 
             JSONArray messagesJSONArray = (JSONArray) reply.get("messages");
